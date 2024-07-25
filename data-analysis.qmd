@@ -1,0 +1,60 @@
+---
+title: "Data Analysis"
+author: "Zhak"
+format: html
+execute: 
+  echo: false
+---
+
+```{r} 
+#| message: false
+#| warning: false
+
+
+library(tidyverse)
+library(dplyr)
+
+info_gavar <- read.csv("gavar.csv") 
+#  drop_na(humidity) |>
+#  mutate(days = as.Date(time)) |>
+#  summarize(humidity = mean(humidity), temperature = temperature, .by = #days)
+
+info_ashotsk <- read.csv("ashotsk.csv") |>
+  filter(time > "2024-06-18")
+
+info_panik <- read.csv("panik.csv") |>
+  filter(time > "2024-06-18")
+
+info_maralik <- read.csv("maralik.csv") |>
+  filter(time > "2024-06-18")
+
+info_sevan <- read.csv("sevan.csv") 
+
+info_artik <- read.csv("artik.csv") |>
+  filter(time > "2024-06-18")
+
+info_azatan <- read.csv("azatan.csv") |>
+  filter(time > "2024-06-18")
+#  drop_na(humidity) |>
+#  mutate(days = as.Date(time)) |>
+#  summarize(humidity = mean(humidity), .by = #days)
+
+#info_gavar |>
+  #ggplot(aes(x = days, y = humidity)) + geom_line()
+
+#info_sevan |> 
+ # ggplot(aes(x = days, y = humidity)) + geom_line()
+
+chart <- rbind(info_gavar, info_sevan, info_azatan, info_artik, info_ashotsk, info_panik, info_maralik) 
+
+chart2 <- chart %>%
+  drop_na(humidity) %>%
+  mutate(days = as.Date(time)) %>%
+  group_by(device, days) %>%
+  summarize(humidity = mean(humidity))
+
+
+chart2 |> 
+  ggplot(aes(x = days, y = humidity, fill=device)) + geom_line(aes(color=device), size = 1.2)
+```
+
