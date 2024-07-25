@@ -6,21 +6,53 @@ execute:
   echo: false
 ---
 
-```{r} 
+```{r}
 #| message: false
 #| warning: false
+#| # This chunk is used for loading the libraries and installing the packages if necessary
 
 
 library(tidyverse)
 library(dplyr)
 
+
+library(maps)
+library(mapdata)
+library(leaflet)
+library(rnaturalearth)
+
+if (!requireNamespace("tmap", quietly = TRUE)) {
+  install.packages("tmap")
+}
+if (!requireNamespace("sf", quietly = TRUE)) {
+  install.packages("sf")
+}
+if (!requireNamespace("rnaturalearth", quietly = TRUE)) {
+  install.packages("rnaturalearth")
+}
+
+library(tmap)
+library(sf)
+```
+
+
+```{r}
+#| message: false
+#| warning: false
+
+# This chunk is used for reading and loading the csv files and combining them into one dataset
+
+
+
 info_gavar <- read.csv("gavar.csv") 
-#  drop_na(humidity) |>
-#  mutate(days = as.Date(time)) |>
-#  summarize(humidity = mean(humidity), temperature = temperature, .by = #days)
 
 info_ashotsk <- read.csv("ashotsk.csv") |>
   filter(time > "2024-06-18")
+
+info_vazgen <- read.csv("vazgen.csv") |>
+  filter(time > "2024-06-18")
+
+info_vazgen |> replace(df$device, df$device, c("Vazgen Sargsyan (Yerevan)"))
 
 info_panik <- read.csv("panik.csv") |>
   filter(time > "2024-06-18")
@@ -35,26 +67,125 @@ info_artik <- read.csv("artik.csv") |>
 
 info_azatan <- read.csv("azatan.csv") |>
   filter(time > "2024-06-18")
-#  drop_na(humidity) |>
-#  mutate(days = as.Date(time)) |>
-#  summarize(humidity = mean(humidity), .by = #days)
 
-#info_gavar |>
-  #ggplot(aes(x = days, y = humidity)) + geom_line()
+chart <- rbind(info_gavar, info_sevan, info_azatan, info_artik, info_ashotsk, info_panik, info_maralik, info_vazgen) 
+```
 
-#info_sevan |> 
- # ggplot(aes(x = days, y = humidity)) + geom_line()
 
-chart <- rbind(info_gavar, info_sevan, info_azatan, info_artik, info_ashotsk, info_panik, info_maralik) 
 
-chart2 <- chart %>%
+```{r} 
+#| message: false
+#| warning: false
+# This chunk is used for making different charts and displaying the graph of each
+
+
+
+
+humidity_chart <- chart %>%
   drop_na(humidity) %>%
   mutate(days = as.Date(time)) %>%
   group_by(device, days) %>%
   summarize(humidity = mean(humidity))
 
+speed_chart <- chart %>%
+  drop_na(speed) %>%
+  mutate(days = as.Date(time)) %>%
+  group_by(device, days) %>%
+  summarize(speed = mean(speed))
 
-chart2 |> 
-  ggplot(aes(x = days, y = humidity, fill=device)) + geom_line(aes(color=device), size = 1.2)
+rain_chart <- chart %>%
+  drop_na(rain) %>%
+  mutate(days = as.Date(time)) %>%
+  group_by(device, days) %>%
+  summarize(rain = mean(rain))
+
+humidity_chart |> 
+  ggplot(aes(x = days, y = humidity)) + geom_line(aes(color=device), linewidth = 0.8, alpha = 0.5) + geom_point(aes(color = device)) +
+  facet_wrap(~device, ncol=2, scales = "fixed") + 
+  labs(title = "Comparison of the Humidity for each device",
+       subtitle = "Artik, Gavar and Maralik have the highest recorded humidity",
+       x = "Date", y = "Humidity") + 
+  theme(
+    axis.text.x = element_text(size = 7),
+    axis.text.y = element_text(size = 7)
+  )
+
+speed_chart |> 
+  ggplot(aes(x = days, y = speed)) + geom_point(aes(color = device)) +
+  facet_wrap(~device, ncol=2, scales = "fixed") + 
+  labs( title = "Comparison of the wind speed for each device",
+        subtitle = "Artik, Ashotsk and Panik have the highest recorded wind speeds",
+        y = "Wind Speed", x = "Date") + 
+  theme(
+    axis.text.x = element_text(size = 7),
+    axis.text.y = element_text(size = 7)
+  )
+
+rain_chart |> 
+  ggplot(aes(x = days, y = rain)) + geom_point(aes(color = device)) +
+  facet_wrap(~device, ncol=2, scales = "fixed") + 
+  labs( title = "Comparison of the rain rate for each device",
+        subtitle = "Gavar, Artik and Ashotsk have the most rain rate",
+        y = "Rain Rate", x = "Date") + 
+  theme(
+    axis.text.x = element_text(size = 7),
+    axis.text.y = element_text(size = 7)
+  )
+
+
+
+
+```
+
+Here's the world map of the locations
+
+```{r}
+
+
+towns <- data.frame(
+  name = c("Gavar", "Sevan", "Azatan", "Ashotsk", "Panik/Artik", "Maralik", "Vazgen Sargsyan Street (Yerevan)"),
+  lon = c(45.12, 44.9, 43.85, 43.81, 43.9, 43.84, 44.505),
+  lat = c(40.35, 40.56, 40.73, 41, 40.69, 40.51, 40.180)
+)
+
+# Center of Armenia (approximate)
+armenia_center <- c(40.3, 45.0)
+
+# Create leaflet map
+map <- leaflet() %>%
+  setView(lng = armenia_center[2], lat = armenia_center[1], zoom = 8) %>%
+  addTiles()  # Add default OpenStreetMap tiles
+
+# Add markers for towns
+for (i in 1:nrow(towns)) {
+  map <- map %>%
+    addMarkers(lng = towns$lon[i], lat = towns$lat[i], popup = towns$name[i])
+}
+
+
+map
+```
+
+Here's the map of Armenia with the loactions
+
+```{r}
+
+
+# Download shapefile for Armenia
+armenia <- ne_states(country = "Armenia", returnclass = "sf")
+
+
+
+# Convert to sf object
+towns_sf <- st_as_sf(towns, coords = c("lon", "lat"), crs = st_crs(armenia))
+
+# Create tmap object
+map <- tm_shape(armenia) +
+  tm_borders() +  # Add borders of Armenia
+  tm_shape(towns_sf) +
+  tm_dots(col = "blue", size = 0.5) +  # Add points for towns
+  tm_text(text = "name", size = 0.8, col = "black", ymod=-0.4 ,root = 1)
+
+map
 ```
 
