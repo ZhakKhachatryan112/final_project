@@ -1,10 +1,14 @@
 ---
 title: "Data Analysis"
-author: "Zhak"
-format: html
 execute: 
   echo: false
 ---
+
+### About
+
+#### Here we'll compare the places with different climates. The sources can be found in the [Source](https://zhakkhachatryan112.quarto.pub/final_project/source.html) page
+
+#### First we are gonna start with the temperatures
 
 ```{r}
 #| message: false
@@ -35,50 +39,12 @@ library(tmap)
 library(sf)
 ```
 
-
-```{r}
-#| message: false
-#| warning: false
-
-# This chunk is used for reading and loading the csv files and combining them into one dataset
-
-
-
-info_gavar <- read.csv("gavar.csv") 
-
-info_ashotsk <- read.csv("ashotsk.csv") |>
-  filter(time > "2024-06-18")
-
-info_vazgen <- read.csv("vazgen.csv") |>
-  filter(time > "2024-06-18")
-
-info_vazgen |> replace(df$device, df$device, c("Vazgen Sargsyan (Yerevan)"))
-
-info_panik <- read.csv("panik.csv") |>
-  filter(time > "2024-06-18")
-
-info_maralik <- read.csv("maralik.csv") |>
-  filter(time > "2024-06-18")
-
-info_sevan <- read.csv("sevan.csv") 
-
-info_artik <- read.csv("artik.csv") |>
-  filter(time > "2024-06-18")
-
-info_azatan <- read.csv("azatan.csv") |>
-  filter(time > "2024-06-18")
-
-chart <- rbind(info_gavar, info_sevan, info_azatan, info_artik, info_ashotsk, info_panik, info_maralik, info_vazgen) 
-```
-
-
-
 ```{r} 
 #| message: false
 #| warning: false
 # This chunk is used for making different charts and displaying the graph of each
 
-
+chart <- read_rds("full_data.rds")
 
 
 humidity_chart <- chart %>%
@@ -93,16 +59,65 @@ speed_chart <- chart %>%
   group_by(device, days) %>%
   summarize(speed = mean(speed))
 
+
+
 rain_chart <- chart %>%
   drop_na(rain) %>%
   mutate(days = as.Date(time)) %>%
   group_by(device, days) %>%
   summarize(rain = mean(rain))
 
+temperature_chart <- chart %>%
+  drop_na(temperature) %>%
+  mutate(days = as.Date(time)) %>%
+  group_by(device, days) %>%
+  summarize(temperature = mean(temperature))
+
+```
+
+### Temperature
+
+```{r}
+
+temperature_chart |> 
+  ggplot(aes(x = days, y = temperature)) + geom_line(aes(color=device), linewidth = 0.8, alpha = 0.5) + geom_point(aes(color = device)) +
+  facet_wrap(~device, ncol=2, scales = "free_x") + 
+  labs(title = "Comparison of the temperature for each device by date",
+       subtitle = "Vazgen Sargsyan Street, Azatan and Artik have the highest recorded temperature",
+       x = "Date", y = "Temperature") + 
+  theme(
+    axis.text.x = element_text(size = 7),
+    axis.text.y = element_text(size = 7)
+  )
+
+
+
+temperature_chart |> 
+  ggplot(aes(x = temperature)) + geom_density(aes(color=device, fill = device), linewidth = 0.8, alpha = 0.5) +
+  facet_wrap(~device, ncol = 2, scales = "fixed" ) + 
+  labs(title = "Comparison of the temperature recorded on each device",
+       subtitle = "Vazgen Sargsyan Street, Panik and Azatan have the highest temperature",
+       x = "Temperature") + 
+  theme(
+    axis.text.x = element_text(size = 7),
+    axis.title.y=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks.y=element_blank()
+  ) 
+
+```
+
+#### In these graphs we can see that the Places that are close the the Sevan Lake (Sevan and Gavar) have significally lower temperatures than the other places. 
+#### It could most probably be because of the higher rain rate and humidity in the area.
+
+### Humidity
+
+```{r}
+
 humidity_chart |> 
   ggplot(aes(x = days, y = humidity)) + geom_line(aes(color=device), linewidth = 0.8, alpha = 0.5) + geom_point(aes(color = device)) +
   facet_wrap(~device, ncol=2, scales = "fixed") + 
-  labs(title = "Comparison of the Humidity for each device",
+  labs(title = "Comparison of the Humidity for each device by date",
        subtitle = "Artik, Gavar and Maralik have the highest recorded humidity",
        x = "Date", y = "Humidity") + 
   theme(
@@ -110,8 +125,30 @@ humidity_chart |>
     axis.text.y = element_text(size = 7)
   )
 
+humidity_chart |> 
+  ggplot(aes(x = humidity)) + geom_density(aes(color=device, fill = device), linewidth = 0.8, alpha = 0.5) +
+  facet_wrap(~device, ncol=2, scales = "fixed") + 
+  labs(title = "Overall comparison of the Humidity for each device",
+       subtitle = "Panik, Gavar and Sevan have the highest humidity",
+       x = "Date", y = "Humidity") + 
+  theme(
+    axis.text.x = element_text(size = 7),
+    axis.title.y=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks.y=element_blank()
+  )
+
+```
+
+#### In the humidity graph, we can see again that the humidity in the places near Sevan have significantly higher humidity than the other places. 
+#### Panik and Maralik also have high humidity which might be because of their higher elevation (1700m)
+
+### Wind Speed
+
+```{r}
+
 speed_chart |> 
-  ggplot(aes(x = days, y = speed)) + geom_point(aes(color = device)) +
+  ggplot(aes(x = days, y = speed)) + geom_line(aes(color=device), linewidth = 0.8, alpha = 0.5) + geom_point(aes(color = device)) +
   facet_wrap(~device, ncol=2, scales = "fixed") + 
   labs( title = "Comparison of the wind speed for each device",
         subtitle = "Artik, Ashotsk and Panik have the highest recorded wind speeds",
@@ -120,9 +157,18 @@ speed_chart |>
     axis.text.x = element_text(size = 7),
     axis.text.y = element_text(size = 7)
   )
+ 
+```
+
+#### In the Wind Speed graph the Western side of the country has higher wind speed than the Eastern side. 
+#### Azatan, being close the Panik and Artik, still has lower wind speed.
+
+### Rain Rate
+
+```{r}
 
 rain_chart |> 
-  ggplot(aes(x = days, y = rain)) + geom_point(aes(color = device)) +
+  ggplot(aes(x = days, y = rain)) + geom_line(aes(color=device), linewidth = 0.8, alpha = 0.5) + geom_point(aes(color = device)) +
   facet_wrap(~device, ncol=2, scales = "fixed") + 
   labs( title = "Comparison of the rain rate for each device",
         subtitle = "Gavar, Artik and Ashotsk have the most rain rate",
@@ -133,11 +179,14 @@ rain_chart |>
   )
 
 
-
-
 ```
 
-Here's the world map of the locations
+#### In the Rain Rate graph the places that are close to the Sevan Lake (Sevan, Gavar) have higher Rain Rate.
+#### Azatan recently had a very high rain rate.
+
+### Map
+
+#### Here's the world map of the locations
 
 ```{r}
 
@@ -153,7 +202,7 @@ armenia_center <- c(40.3, 45.0)
 
 # Create leaflet map
 map <- leaflet() %>%
-  setView(lng = armenia_center[2], lat = armenia_center[1], zoom = 8) %>%
+  setView(lng = armenia_center[2], lat = armenia_center[1], zoom = 7) %>%
   addTiles()  # Add default OpenStreetMap tiles
 
 # Add markers for towns
@@ -166,7 +215,7 @@ for (i in 1:nrow(towns)) {
 map
 ```
 
-Here's the map of Armenia with the loactions
+#### Here's the map of Armenia with the locations
 
 ```{r}
 

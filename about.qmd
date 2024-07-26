@@ -2,4 +2,14 @@
 title: "About"
 ---
 
-About this site
+### About the Project
+
+#### This project is all about the comparison of climate change through June and July. 
+#### We'll will comparing 7 places: Gavar, Sevan, Azatan, Ashotsk, Panik/Artik, Maralik and Vazgen Sargsyan Street (Yerevan) with 4 graphs of humidity, wind speed, temperature and rain rate. 
+#### The comparison will be in the [Data Analysis](https://zhakkhachatryan112.quarto.pub/final_project/data-analysis.html) page.
+
+### About me
+
+#### My name is Zhak. 
+#### I'm 18 years old and have garduated high School and I'll be attending to National Polytechnic University of Armenia, Kapan branch.
+#### I'm mostly a Back-Bnd Programmer but I also have a goal of becoming a Data Scientist.

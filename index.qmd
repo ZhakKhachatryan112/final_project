@@ -1,7 +1,60 @@
 ---
-title: "Final_Project"
+title: "Final Project"
 ---
 
-This is a Quarto website.
+#### Welcome to my project!
 
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
+#### This project will be about the weather change. For more info check the [About](https://zhakkhachatryan112.quarto.pub/final_project/about.html) page.
+
+#### Here's the map of the places. We'll do some research about Weather and Climate in [Data Analysis](https://zhakkhachatryan112.quarto.pub/final_project/data-analysis.html) page.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(dplyr)
+
+
+ 
+library(rnaturalearth)
+
+if (!requireNamespace("tmap", quietly = TRUE)) {
+  install.packages("tmap")
+}
+if (!requireNamespace("sf", quietly = TRUE)) {
+  install.packages("sf")
+}
+if (!requireNamespace("rnaturalearth", quietly = TRUE)) {
+  install.packages("rnaturalearth")
+}
+
+library(tmap)
+library(sf)
+
+
+towns <- data.frame(
+  name = c("Gavar", "Sevan", "Azatan", "Ashotsk", "Panik/Artik", "Maralik", "Vazgen Sargsyan Street (Yerevan)"),
+  lon = c(45.12, 44.9, 43.85, 43.81, 43.9, 43.84, 44.505),
+  lat = c(40.35, 40.56, 40.75, 41, 40.69, 40.51, 40.180)
+)
+
+# Download shapefile for Armenia
+armenia <- ne_states(country = "Armenia", returnclass = "sf")
+
+
+
+# Convert to sf object
+towns_sf <- st_as_sf(towns, coords = c("lon", "lat"), crs = st_crs(armenia))
+
+# Create tmap object
+map <- tm_shape(armenia) +
+  tm_borders() +  # Add borders of Armenia
+  tm_shape(towns_sf) +
+  tm_dots(col = "blue", size = 0.5) +  # Add points for towns
+  tm_text(text = "name", size = 0.8, col = "black", ymod = -0.4 ,root = 1)
+
+map
+```
+

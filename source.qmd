@@ -1,0 +1,12 @@
+---
+title: "Source"
+format: html
+execute: 
+  echo: false
+---
+
+The map of Armenia was made with the help of [ChatGPT](https://openai.com/chatgpt/)
+
+the graph was made from the rds file [You can download it here](https://drive.google.com/file/d/1WR8bhPdbMCL1UQjXBrJHxz5ebMqLBOgb/view?usp=drive_link)
+
+More data can be found [here](https://drive.google.com/drive/folders/1Cv9naTiO6nx03jzivgzGyIzwKRWze9v5?usp=drive_link) 
